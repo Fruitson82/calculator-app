@@ -61,68 +61,7 @@ function App() {
     return `${size}px`;
   };
 
-  // iPhone 스타일 버튼 공통 스타일 생성기
-  const getButtonStyle = (
-    kind: "number" | "function" | "operator",
-    options?: { selected?: boolean; wide?: boolean }
-  ): React.CSSProperties => {
-    const selected = options?.selected ?? false;
-    const wide = options?.wide ?? false;
-
-    const base: React.CSSProperties = {
-      height: "80px",
-      borderRadius: wide ? "40px" : "50%",
-      border: "none",
-      cursor: "pointer",
-      fontFamily:
-        '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-      fontSize: "32px",
-      fontWeight: 400,
-      color: "#FFFFFF",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: wide ? "flex-start" : "center",
-      paddingLeft: wide ? "32px" : 0,
-      boxShadow:
-        "inset 0 1px 0 rgba(255,255,255,0.1), 0 6px 12px rgba(0,0,0,0.35)",
-      transition: "transform 80ms ease, filter 120ms ease",
-      WebkitTapHighlightColor: "transparent",
-      userSelect: "none",
-    };
-
-    if (kind === "number") {
-      return {
-        ...base,
-        background:
-          "linear-gradient(180deg, #5A5A5A 0%, #3A3A3C 40%, #2C2C2E 100%)",
-      };
-    }
-
-    if (kind === "function") {
-      return {
-        ...base,
-        color: "#000000",
-        background:
-          "linear-gradient(180deg, #D4D4D2 0%, #C7C7C5 40%, #A6A6A6 100%)",
-      };
-    }
-
-    // operator
-    if (selected) {
-      return {
-        ...base,
-        color: "#FF9500",
-        background:
-          "linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 50%, #F2F2F2 100%)",
-      };
-    }
-
-    return {
-      ...base,
-      background:
-        "linear-gradient(180deg, #FFB340 0%, #FFA031 40%, #FF9500 100%)",
-    };
-  };
+  // (removed) 이전 공통 버튼 스타일 함수는 사용하지 않아 제거했습니다.
 
   const inputNumber = (num: string) => {
     if (lastWasEquals) {
