@@ -68,8 +68,6 @@ function App() {
       // '=' 이후 새 입력이 시작되면 이전 연산식은 초기화
       setExpression("");
       setLastWasEquals(false);
-      setLastRepeatOperator(null);
-      setLastRepeatOperand("");
     }
     if (waitingForOperand) {
       setDisplay(num);
