@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 
 type Operation = "+" | "-" | "×" | "÷" | null;
 
@@ -8,6 +8,7 @@ function App() {
   const [selectedOperation, setSelectedOperation] = useState<Operation>(null);
   const [lastWasEquals, setLastWasEquals] = useState(false);
   const [waitingForOperand, setWaitingForOperand] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   // 숫자 문자열을 1,000 단위 콤마로 포맷 (소수점/부호 보존)
   const formatNumber = (value: string): string => {
@@ -178,549 +179,668 @@ function App() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#000000",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px",
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-      }}
-    >
+    <Fragment>
+      {/* Custom Modal */}
+      {showModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            animation: "fadeIn 0.3s ease-out",
+          }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "#1C1C1E",
+              borderRadius: "20px",
+              padding: "32px",
+              maxWidth: "300px",
+              width: "90%",
+              textAlign: "center",
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
+              border: "1px solid #333333",
+              animation: "slideIn 0.3s ease-out",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                fontSize: "48px",
+                marginBottom: "16px",
+                animation: "bounce 0.6s ease-out",
+              }}
+            >
+              💩
+            </div>
+            <h2
+              style={{
+                color: "#FFFFFF",
+                fontSize: "24px",
+                fontWeight: "600",
+                margin: "0 0 16px 0",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+            >
+              한소망 메롱! 똥쟁아~
+            </h2>
+            <p
+              style={{
+                color: "#8E8E93",
+                fontSize: "16px",
+                margin: "0 0 24px 0",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+            >
+              ㅋㅋㅋ 메롱메롱메롱~~~ 😊
+            </p>
+            <button
+              onClick={() => setShowModal(false)}
+              style={{
+                backgroundColor: "#FF9500",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: "12px",
+                padding: "12px 24px",
+                fontSize: "16px",
+                fontWeight: "600",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+                transition: "all 0.2s ease",
+                boxShadow: "0 4px 12px rgba(255, 149, 0, 0.3)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#FFB340";
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow =
+                  "0 6px 16px rgba(255, 149, 0, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#FF9500";
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 12px rgba(255, 149, 0, 0.3)";
+              }}
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
+
       <div
         style={{
+          minHeight: "100vh",
           backgroundColor: "#000000",
-          maxWidth: "375px",
-          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "16px",
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
         }}
       >
-        {/* Display */}
         <div
           style={{
             backgroundColor: "#000000",
-            padding: "32px 24px 16px 24px",
+            maxWidth: "375px",
+            width: "100%",
           }}
         >
-          {/* Expression Display (always rendered with fixed height) */}
+          {/* Display */}
+          <div
+            style={{
+              backgroundColor: "#000000",
+              padding: "32px 24px 16px 24px",
+            }}
+          >
+            {/* Expression Display (always rendered with fixed height) */}
+            <div
+              style={{
+                textAlign: "right",
+                color: "#FFFFFF",
+                fontSize: "24px",
+                fontWeight: "300",
+                opacity: 0.7,
+                marginBottom: "8px",
+                height: "28px",
+                lineHeight: "28px",
+                overflow: "hidden",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+            >
+              {expression ? formatExpression(expression) : "\u00A0"}
+            </div>
+            {/* Main Display */}
+            <div
+              style={{
+                textAlign: "right",
+                color: "#FFFFFF",
+                fontSize: getDisplayFontSize(display),
+                fontWeight: "200",
+                overflow: "hidden",
+                lineHeight: "1",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+                whiteSpace: "nowrap",
+                height: "96px", // 고정 높이로 레이아웃 안정화
+                display: "flex",
+                alignItems: "flex-end",
+                justifyContent: "flex-end",
+              }}
+            >
+              {formatNumber(display)}
+            </div>
+          </div>
+
+          {/* Button Grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: "12px",
+              padding: "0 8px 8px 8px",
+            }}
+          >
+            {/* Row 1 */}
+            <button
+              onClick={clear}
+              style={{
+                gridColumn: "span 2",
+                backgroundColor: "#A6A6A6",
+                color: "#000000",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#999999")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#A6A6A6")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#A6A6A6")
+              }
+            >
+              {getClearButtonText()}
+            </button>
+            <button
+              onClick={backspace}
+              style={{
+                backgroundColor: "#A6A6A6",
+                color: "#000000",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#999999")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#A6A6A6")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#A6A6A6")
+              }
+            >
+              ⌫
+            </button>
+            <button
+              onClick={() => inputOperation("÷")}
+              style={{
+                backgroundColor:
+                  selectedOperation === "÷" ? "#FFFFFF" : "#FF9500",
+                color: selectedOperation === "÷" ? "#FF9500" : "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+            >
+              ÷
+            </button>
+
+            {/* Row 2 */}
+            <button
+              onClick={() => inputNumber("7")}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              7
+            </button>
+            <button
+              onClick={() => inputNumber("8")}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              8
+            </button>
+            <button
+              onClick={() => inputNumber("9")}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              9
+            </button>
+            <button
+              onClick={() => inputOperation("×")}
+              style={{
+                backgroundColor:
+                  selectedOperation === "×" ? "#FFFFFF" : "#FF9500",
+                color: selectedOperation === "×" ? "#FF9500" : "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+            >
+              ×
+            </button>
+
+            {/* Row 3 */}
+            <button
+              onClick={() => inputNumber("4")}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              4
+            </button>
+            <button
+              onClick={() => inputNumber("5")}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              5
+            </button>
+            <button
+              onClick={() => inputNumber("6")}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              6
+            </button>
+            <button
+              onClick={() => inputOperation("-")}
+              style={{
+                backgroundColor:
+                  selectedOperation === "-" ? "#FFFFFF" : "#FF9500",
+                color: selectedOperation === "-" ? "#FF9500" : "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+            >
+              −
+            </button>
+
+            {/* Row 4 */}
+            <button
+              onClick={() => inputNumber("1")}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              1
+            </button>
+            <button
+              onClick={() => inputNumber("2")}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              2
+            </button>
+            <button
+              onClick={() => inputNumber("3")}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              3
+            </button>
+            <button
+              onClick={() => inputOperation("+")}
+              style={{
+                backgroundColor:
+                  selectedOperation === "+" ? "#FFFFFF" : "#FF9500",
+                color: selectedOperation === "+" ? "#FF9500" : "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+            >
+              +
+            </button>
+
+            {/* Row 5 */}
+            <button
+              onClick={() => inputNumber("0")}
+              style={{
+                gridColumn: "span 2",
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "40px",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+                textAlign: "left",
+                paddingLeft: "32px",
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              0
+            </button>
+            <button
+              onClick={inputDecimal}
+              style={{
+                backgroundColor: "#333333",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#4A4A4A")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#333333")
+              }
+            >
+              .
+            </button>
+            <button
+              onClick={performCalculation}
+              style={{
+                backgroundColor: "#FF9500",
+                color: "#FFFFFF",
+                fontSize: "32px",
+                fontWeight: "400",
+                borderRadius: "50%",
+                height: "80px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily:
+                  '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+              }}
+              onMouseDown={(e) =>
+                (e.currentTarget.style.backgroundColor = "#FFAD33")
+              }
+              onMouseUp={(e) =>
+                (e.currentTarget.style.backgroundColor = "#FF9500")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#FF9500")
+              }
+            >
+              =
+            </button>
+          </div>
+
+          {/* Copyright */}
           <div
             style={{
               textAlign: "right",
-              color: "#FFFFFF",
-              fontSize: "24px",
+              color: "#666666",
+              fontSize: "12px",
               fontWeight: "300",
-              opacity: 0.7,
-              marginBottom: "8px",
-              height: "28px",
-              lineHeight: "28px",
-              overflow: "hidden",
+              padding: "16px 24px 8px 24px",
               fontFamily:
                 '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
             }}
           >
-            {expression ? formatExpression(expression) : "\u00A0"}
+            © 2025 Calculator App by Kwang-sik{" "}
+            <p>
+              For My Hannas, and DDongJang2 Somang{" "}
+              <span
+                onClick={() => setShowModal(true)}
+                style={{
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  transition: "transform 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                }}
+              >
+                💩
+              </span>
+            </p>
           </div>
-          {/* Main Display */}
-          <div
-            style={{
-              textAlign: "right",
-              color: "#FFFFFF",
-              fontSize: getDisplayFontSize(display),
-              fontWeight: "200",
-              overflow: "hidden",
-              lineHeight: "1",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-              whiteSpace: "nowrap",
-              height: "96px", // 고정 높이로 레이아웃 안정화
-              display: "flex",
-              alignItems: "flex-end",
-              justifyContent: "flex-end",
-            }}
-          >
-            {formatNumber(display)}
-          </div>
-        </div>
-
-        {/* Button Grid */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, 1fr)",
-            gap: "12px",
-            padding: "0 8px 8px 8px",
-          }}
-        >
-          {/* Row 1 */}
-          <button
-            onClick={clear}
-            style={{
-              gridColumn: "span 2",
-              backgroundColor: "#A6A6A6",
-              color: "#000000",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#999999")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#A6A6A6")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#A6A6A6")
-            }
-          >
-            {getClearButtonText()}
-          </button>
-          <button
-            onClick={backspace}
-            style={{
-              backgroundColor: "#A6A6A6",
-              color: "#000000",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#999999")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#A6A6A6")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#A6A6A6")
-            }
-          >
-            ⌫
-          </button>
-          <button
-            onClick={() => inputOperation("÷")}
-            style={{
-              backgroundColor:
-                selectedOperation === "÷" ? "#FFFFFF" : "#FF9500",
-              color: selectedOperation === "÷" ? "#FF9500" : "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-          >
-            ÷
-          </button>
-
-          {/* Row 2 */}
-          <button
-            onClick={() => inputNumber("7")}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            7
-          </button>
-          <button
-            onClick={() => inputNumber("8")}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            8
-          </button>
-          <button
-            onClick={() => inputNumber("9")}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            9
-          </button>
-          <button
-            onClick={() => inputOperation("×")}
-            style={{
-              backgroundColor:
-                selectedOperation === "×" ? "#FFFFFF" : "#FF9500",
-              color: selectedOperation === "×" ? "#FF9500" : "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-          >
-            ×
-          </button>
-
-          {/* Row 3 */}
-          <button
-            onClick={() => inputNumber("4")}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            4
-          </button>
-          <button
-            onClick={() => inputNumber("5")}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            5
-          </button>
-          <button
-            onClick={() => inputNumber("6")}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            6
-          </button>
-          <button
-            onClick={() => inputOperation("-")}
-            style={{
-              backgroundColor:
-                selectedOperation === "-" ? "#FFFFFF" : "#FF9500",
-              color: selectedOperation === "-" ? "#FF9500" : "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-          >
-            −
-          </button>
-
-          {/* Row 4 */}
-          <button
-            onClick={() => inputNumber("1")}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            1
-          </button>
-          <button
-            onClick={() => inputNumber("2")}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            2
-          </button>
-          <button
-            onClick={() => inputNumber("3")}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            3
-          </button>
-          <button
-            onClick={() => inputOperation("+")}
-            style={{
-              backgroundColor:
-                selectedOperation === "+" ? "#FFFFFF" : "#FF9500",
-              color: selectedOperation === "+" ? "#FF9500" : "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-          >
-            +
-          </button>
-
-          {/* Row 5 */}
-          <button
-            onClick={() => inputNumber("0")}
-            style={{
-              gridColumn: "span 2",
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "40px",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-              textAlign: "left",
-              paddingLeft: "32px",
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            0
-          </button>
-          <button
-            onClick={inputDecimal}
-            style={{
-              backgroundColor: "#333333",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#4A4A4A")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#333333")
-            }
-          >
-            .
-          </button>
-          <button
-            onClick={performCalculation}
-            style={{
-              backgroundColor: "#FF9500",
-              color: "#FFFFFF",
-              fontSize: "32px",
-              fontWeight: "400",
-              borderRadius: "50%",
-              height: "80px",
-              border: "none",
-              cursor: "pointer",
-              fontFamily:
-                '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-            }}
-            onMouseDown={(e) =>
-              (e.currentTarget.style.backgroundColor = "#FFAD33")
-            }
-            onMouseUp={(e) =>
-              (e.currentTarget.style.backgroundColor = "#FF9500")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#FF9500")
-            }
-          >
-            =
-          </button>
-        </div>
-
-        {/* Copyright */}
-        <div
-          style={{
-            textAlign: "right",
-            color: "#666666",
-            fontSize: "12px",
-            fontWeight: "300",
-            padding: "16px 24px 8px 24px",
-            fontFamily:
-              '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-          }}
-        >
-          © 2025 Calculator App by Kwang-sik{" "}
-          <p>For My Hannas, and DDongJang2 Somang 💩</p>
         </div>
       </div>
-    </div>
+    </Fragment>
   );
 }
 
